@@ -19,6 +19,24 @@ jbdcDriver = 'com.mysql.jdbc.Driver'
 jdbcUrl = 'jdbc:mysql://{}:3306/{}?user={}&password={}'.format(
                         SQL_IP, SQL_DB_NAME, SQL_USER, SQL_PSWD)
 
+# howFar() ran down below
+def howFar(model, against, sizeAgainst):
+  # don't use ratings
+  againstNoRatings = against.map( lambda x: (int(x[1]), int(x[2])) )
+
+  # use 1 as the rating to compare
+  againstWiRatings = against.map( lambda x: ((int(x[1]), int(x[2])), int(1)) )
+
+  # make prediction and map for later comparison
+  predictions = model.predictAll(againstNoRatings).map( lambda p: ( (p[0],p[1]), p[2]) )
+
+  # returns the pairs (prediction, rating)
+  predictionsAndRatings = predictions.join(againstWiRatings).values()
+
+  # return the variance
+  return sqrt(predictionsAndRatings.map(lambda s: (s[0] - s[1]) ** 2).reduce(add) / float(sizeAgainst))
+# end of howFar()
+
 '''
 Reading data from Cloud SQL where stored
 Creating dataframes
@@ -46,6 +64,36 @@ print('Training: {}, validation: {}, test: {}'.format(rddTrain.count()
                                                      ,rddValidate.count()
                                                      ,rddTest.count()
                                                      ))
+
+# try these compinations
+ranks = [5,10,15]
+reguls = [0.1,1]
+iters = [5,10,20]
+
+finalModel = None
+finalRank = 0
+finalRegul = float(0)
+finalIter = -1
+finalDist = float(1000)
+
+# start training model on combinations of inputs
+for cRank, cRegul, cIter in itertools.product(ranks, reguls, iters):
+
+  model = ALS.train(rddTrain, cRank, cIter, float(cRegul))
+  dist = howFar(model, rddValidate, nbValidate)
+  if dist < finalDist:
+    print("Best dist so far: {}".format(dist))
+    finalModel = model
+    finalRank = cRank
+    finalRegul = cRegul
+    finalIter = cIter
+    finalDist = dist
+# end training model
+
+print("Rank: {}".format(finalRank))
+print("Regul: {}".format(finalRegul))
+print("Iter: {}".format(finalIter))
+print("Dist: {}".format(finalDist))
 
 
 
