@@ -41,7 +41,7 @@ def howFar(model, against, sizeAgainst):
 Reading data from Cloud SQL where stored
 Creating dataframes
 '''
-dfRates = sql-context.read.format('jdbc').options(url=jdbcUrl, dbtable='Like').load()
+dfRates = sql-context.read.format('jdbc').options(url=jdbcUrl, dbtable='Vote').load()
 
 rddUserRatings = dfRates.filter(dfRates.userId == 0).rdd
 print(rddUserRatings.count())
