@@ -7,17 +7,17 @@ DROP TABLE IF EXISTS Vote;
 DROP TABLE IF EXISTS Product;
 CREATE TABLE IF NOT EXISTS Product
 (
-  id varchar(255),
+  id int,
   name varchar(255),
-  tagline varchar(255),
-  PRIMARY KEY (ID)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS Vote
 (
-  userId varchar(255),
-  prodId varchar(255),
-  rating int,
+  createdAt varchar(255),
+  userId int,
+  prodId int,
+  rating int DEFAULT 1,
   PRIMARY KEY(prodId, userId),
   FOREIGN KEY (prodId)
     REFERENCES Product(id)

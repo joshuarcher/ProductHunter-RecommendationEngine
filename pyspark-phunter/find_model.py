@@ -4,16 +4,16 @@ from math import sqrt
 from operator import add
 from os.path import join, isfile, dirname
 from pyspark import SparkContext, SparkConf, SQLContext
-from pyspark.mllib.recommendation import ALS MatrixFactorizationModel, Rating
+from pyspark.mllib.recommendation import ALS, MatrixFactorizationModel, Rating
 
 SQL_IP = sys.argv[1]
-SQL_DB_NAME = sys.argv[1]
+SQL_DB_NAME = sys.argv[2]
 SQL_USER = sys.argv[3]
 SQL_PSWD = sys.argv[4]
 
 conf = SparkConf().setAppName("phunter_collaborative")
-sp-context = SparkContext(conf=conf)
-sql-context = SQLContext(sp-context)
+spcontext = SparkContext(conf=conf)
+sqlContext = SQLContext(spcontext)
 
 jbdcDriver = 'com.mysql.jdbc.Driver'
 jdbcUrl = 'jdbc:mysql://{}:3306/{}?user={}&password={}'.format(
@@ -41,8 +41,12 @@ def howFar(model, against, sizeAgainst):
 Reading data from Cloud SQL where stored
 Creating dataframes
 '''
-dfRates = sql-context.read.format('jdbc').options(url=jdbcUrl, dbtable='Vote').load()
+# dfRates = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable='Rating').load()
+dfRates = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable='Vote').load()
 
+print("dfRates: {}".format(dfRates))
+
+sys.exit()
 rddUserRatings = dfRates.filter(dfRates.userId == 0).rdd
 print(rddUserRatings.count())
 
@@ -78,7 +82,7 @@ finalDist = float(1000)
 
 # start training model on combinations of inputs
 for cRank, cRegul, cIter in itertools.product(ranks, reguls, iters):
-
+  print("rddTrain: {}\n cRank: {}\n cIter: {}\n cRegul: {}".format(rddTrain, cRank, cIter, cRegul))
   model = ALS.train(rddTrain, cRank, cIter, float(cRegul))
   dist = howFar(model, rddValidate, nbValidate)
   if dist < finalDist:
