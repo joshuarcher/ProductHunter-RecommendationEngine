@@ -7,30 +7,24 @@ DROP TABLE IF EXISTS Vote;
 DROP TABLE IF EXISTS Product;
 CREATE TABLE IF NOT EXISTS Product
 (
-  id int,
-  name varchar(255),
-  PRIMARY KEY (id)
-);
+  id int NOT NULL PRIMARY KEY,
+  userId int NOT NULL
+)ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS Vote
 (
-  createdAt varchar(255),
-  userId int,
-  prodId int,
-  rating int DEFAULT 1,
+  userId int NOT NULL,
+  prodId int NOT NULL,
+  rating int,
   PRIMARY KEY(prodId, userId),
-  FOREIGN KEY (prodId)
-    REFERENCES Product(id)
-);
+  CONSTRAINT FOREIGN KEY (prodId) REFERENCES Product(id)
+)ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS Recommendation
 (
-  userId varchar(255),
-  prodId varchar(255),
+  userId int,
+  prodId int,
   prediction float,
   PRIMARY KEY(userId, prodId),
-  FOREIGN KEY (prodId)
-    REFERENCES Product(id)
-);
-
-
+  CONSTRAINT FOREIGN KEY (prodId) REFERENCES Product(id)
+)ENGINE=InnoDB;

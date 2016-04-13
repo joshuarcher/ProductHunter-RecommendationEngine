@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 import itertools
 from math import sqrt
@@ -22,10 +24,10 @@ jdbcUrl = 'jdbc:mysql://{}:3306/{}?user={}&password={}'.format(
 # howFar() ran down below
 def howFar(model, against, sizeAgainst):
   # don't use ratings
-  againstNoRatings = against.map( lambda x: (int(x[1]), int(x[2])) )
+  againstNoRatings = against.map( lambda x: (int(x[0]), int(x[1])) )
 
   # use 1 as the rating to compare
-  againstWiRatings = against.map( lambda x: ((int(x[1]), int(x[2])), int(1)) )
+  againstWiRatings = against.map( lambda x: ((int(x[0]), int(x[1])), int(x[2])) )
 
   # make prediction and map for later comparison
   predictions = model.predictAll(againstNoRatings).map( lambda p: ( (p[0],p[1]), p[2]) )
@@ -46,7 +48,7 @@ dfRates = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable='Vote').lo
 
 print("dfRates: {}".format(dfRates))
 
-sys.exit()
+# sys.exit()
 rddUserRatings = dfRates.filter(dfRates.userId == 0).rdd
 print(rddUserRatings.count())
 
