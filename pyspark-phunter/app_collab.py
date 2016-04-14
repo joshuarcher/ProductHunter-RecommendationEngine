@@ -11,12 +11,13 @@ from pyspark.sql.types import StructType
 from pyspark.sql.types import StructField
 from pyspark.sql.types import StringType
 from pyspark.sql.types import FloatType
+from pyspark.sql.types import IntegerType
 
 conf = SparkConf().setAppName("phunter_spark")
 spContext = SparkContext(conf=conf)
 sqlContext = SQLContext(spContext)
 
-USER_ID = 0
+USER_ID = 7911
 # Rank: 10
 # Regul: 0.1
 # Iter: 20
@@ -41,8 +42,17 @@ jdbcDriver = 'com.mysql.jdbc.Driver'
 jdbcUrl = 'jdbc:mysql://{}:3306/{}?user={}&password={}'.format(
                         SQL_IP, SQL_DB_NAME, SQL_USER, SQL_PSWD)
 
-dframeAccos = sqlContext.load(source='jdbc', driver=jdbcDriver, url=jdbcUrl, dbtable=TABLE_PRODUCTS)
-dframeRates = sqlContext.load(source='jdbc', driver=jdbcDriver, url=jdbcUrl, dbtable=TABLE_VOTES)
+# dframeAccos = sqlContext.read.load(source='jdbc', driver=jdbcDriver, url=jdbcUrl, dbtable=TABLE_PRODUCTS)
+# dframeRates = sqlContext.read.load(source='jdbc', driver=jdbcDriver, url=jdbcUrl, dbtable=TABLE_VOTES)
+# dfRates = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable='Vote').load()
+
+dframeAccos = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable=TABLE_PRODUCTS).load()
+dframeRates = sqlContext.read.format('jdbc').options(url=jdbcUrl, dbtable=TABLE_VOTES).load()
+
+
+# get all ratings of user
+dframeUserRatings  = dframeRates.filter(dframeRates.userId == USER_ID).map(lambda r: r.prodId).collect()
+print("user ratings: {}".format(dframeUserRatings))
 
 # Returns only the accommodations that have not been rated by our user
 rddPotential  = dframeAccos.rdd.filter(lambda x: x[0] not in dframeUserRatings)
@@ -57,11 +67,14 @@ model = ALS.train(rddTrain, BEST_RANK, BEST_ITERATION, BEST_REGULATION)
 # calculate predictions
 predictions = model.predictAll(pairsPotential).map(lambda p: (int(p[0]), int(p[1]), float(p[2])))
 
+print("--------------\n--------------")
 # get top 5
-topPredictions = predictions.takeOrdered(5, key=lambda x: -x[2])
+topPredictions = predictions.takeOrdered(2)
+#predictions.takeOrdered(5)
+#.takeOrdered(5, key = lambda x: -x)#-x[2]
 print("top predictions: {}".format(topPredictions))
 
-schema = StructType([StructField("userId", StringType(), True), StructField("prodId", StringType(), True), StructField("prediction", FloatType(), True)])
+schema = StructType([StructField("userId", IntegerType(), True), StructField("prodId", IntegerType(), True), StructField("prediction", FloatType(), True)])
 
 
 # save the top predictions
